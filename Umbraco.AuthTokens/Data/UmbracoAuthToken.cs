@@ -25,6 +25,8 @@ namespace UmbracoAuthTokens.Data
         [Column("authToken")]
         public string AuthToken { get; set; }
 
-
-    }
+		// S6 Added to match warren repo which tracks expiration
+		[Column("dateExpires")]
+		public DateTime DateExpires { get; set; }
+	}
 }

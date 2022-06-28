@@ -21,42 +21,46 @@ namespace UmbracoAuthTokens.Controllers
         {
             //Verify user is valid credentials
             var isValidAuth = Security.ValidateBackOfficeCredentials(auth.Username, auth.Password);
- 
-            //Are credentials correct?
-            if (isValidAuth)
-            {
-                //Get the backoffice user from username
-                var user = ApplicationContext.Services.UserService.GetByUsername(auth.Username);
- 
-                //Check if we have an Auth Token for user
-                var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(user.Id);
- 
-                //If the token already exists
-                if (hasAuthToken != null)
-                {
-                    //Lets just return it in the request
-                    return hasAuthToken.AuthToken;
-                }
- 
-                //Else user has no token yet - so let's create one
-                //Generate AuthToken DB object
-                var newToken = new UmbracoAuthToken();
-                newToken.IdentityId = user.Id;
-                newToken.IdentityType = IdentityAuthType.User.ToString();
- 
-                //Generate a new token for the user
-                var authToken = UmbracoAuthTokenFactory.GenerateAuthToken(newToken);
- 
-                //We insert authToken as opposed to newToken
-                //As authToken now has DateTime & JWT token string on it now
- 
-                //Store in DB (inserts or updates existing)
-                UserAuthTokenDbHelper.InsertAuthToken(authToken);
- 
-                //Return the JWT token as the response
-                //This means valid login & client in our case mobile app stores token in local storage
-                return authToken.AuthToken;
-            }
+
+			//Are credentials correct?
+			if (isValidAuth)
+			{
+				//Get the backoffice user from username
+				var user = ApplicationContext.Services.UserService.GetByUsername(auth.Username);
+
+				if (user != null)
+				{
+					// S6 Removing this, otherwise existing token won't get updated (warren master branch doesn't perform hasAuthToken at all)
+					//Check if we have an Auth Token for user
+					//var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(user.Id);
+
+					////If the token already exists
+					//if (hasAuthToken != null)
+					//{
+					//    //Lets just return it in the request
+					//    return hasAuthToken.AuthToken;
+					//}
+
+					//Else user has no token yet - so let's create one
+					//Generate AuthToken DB object
+					var newToken = new UmbracoAuthToken();
+					newToken.IdentityId = user.Id;
+					newToken.IdentityType = IdentityAuthType.User.ToString();
+
+					//Generate a new token for the user
+					var authToken = UmbracoAuthTokenFactory.GenerateAuthToken(newToken);
+
+					//We insert authToken as opposed to newToken
+					//As authToken now has DateTime & JWT token string on it now
+
+					//Store in DB (inserts or updates existing)
+					UserAuthTokenDbHelper.InsertAuthToken(authToken);
+
+					//Return the JWT token as the response
+					//This means valid login & client in our case mobile app stores token in local storage
+					return authToken.AuthToken;
+				}
+			}
  
             //Throw unauthorised HTTP error
             var httpUnauthorised = new HttpResponseMessage(HttpStatusCode.Unauthorized);
@@ -74,43 +78,47 @@ namespace UmbracoAuthTokens.Controllers
             //Verify user is valid credentials - using current membership provider
             //Should be native Umbraco one
             var isValidAuth = Membership.ValidateUser(auth.Username, auth.Password);
- 
-            //Are credentials correct?
-            if (isValidAuth)
-            {
-                //Get the member from username
-                var member = ApplicationContext.Services.MemberService.GetByUsername(auth.Username);
- 
-                //Check if we have an Auth Token for user
-                var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(member.Id);
- 
-                //If the token already exists
-                if (hasAuthToken != null)
-                {
-                    //Lets just return it in the request
-                    return hasAuthToken.AuthToken;
-                }
- 
-                //Else user has no token yet - so let's create one
-                //Generate AuthToken DB object
-                var newToken = new UmbracoAuthToken();
-                newToken.IdentityId = member.Id;
-                newToken.IdentityType = IdentityAuthType.Member.ToString();
- 
-                //Generate a new token for the user
-                var authToken = UmbracoAuthTokenFactory.GenerateAuthToken(newToken);
- 
-                //We insert authToken as opposed to newToken
-                //As authToken now has DateTime & JWT token string on it now
- 
-                //Store in DB (inserts or updates existing)
-                UserAuthTokenDbHelper.InsertAuthToken(authToken);
- 
-                //Return the JWT token as the response
-                //This means valid login & client in our case mobile app stores token in local storage
-                return authToken.AuthToken;
-            }
- 
+
+			//Are credentials correct?
+			if (isValidAuth)
+			{
+				//Get the member from username
+				var member = ApplicationContext.Services.MemberService.GetByUsername(auth.Username);
+
+				if (member != null)
+				{
+					// S6 Remove hasAuthToken check
+					//Check if we have an Auth Token for user
+					//var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(member.Id);
+
+					////If the token already exists
+					//if (hasAuthToken != null)
+					//{
+					//	//Lets just return it in the request
+					//	return hasAuthToken.AuthToken;
+					//}
+
+					//Else user has no token yet - so let's create one
+					//Generate AuthToken DB object
+					var newToken = new UmbracoAuthToken();
+					newToken.IdentityId = member.Id;
+					newToken.IdentityType = IdentityAuthType.Member.ToString();
+
+					//Generate a new token for the user
+					var authToken = UmbracoAuthTokenFactory.GenerateAuthToken(newToken);
+
+					//We insert authToken as opposed to newToken
+					//As authToken now has DateTime & JWT token string on it now
+
+					//Store in DB (inserts or updates existing)
+					UserAuthTokenDbHelper.InsertAuthToken(authToken);
+
+					//Return the JWT token as the response
+					//This means valid login & client in our case mobile app stores token in local storage
+					return authToken.AuthToken;
+				}
+			}
+
             //Throw unauthorised HTTP error
             var httpUnauthorised = new HttpResponseMessage(HttpStatusCode.Unauthorized);
             throw new HttpResponseException(httpUnauthorised);

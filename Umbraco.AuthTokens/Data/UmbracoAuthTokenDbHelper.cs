@@ -1,11 +1,12 @@
-﻿using Umbraco.Core;
+﻿using System;
+using Umbraco.Core;
 using Umbraco.Core.Persistence;
- 
+
 namespace UmbracoAuthTokens.Data
 {
     public static class UserAuthTokenDbHelper
     {
-        private static readonly UmbracoDatabase Database = ApplicationContext.Current.DatabaseContext.Database;
+        private static readonly UmbracoDatabase Database = ApplicationContext.Current.DatabaseContext.Database; // S6 TODO Replace static Database reference!
  
         /// <summary>
         /// Try & see if we can find a record in the DB based off the User ID
@@ -42,9 +43,10 @@ namespace UmbracoAuthTokens.Data
                 //Update the existing record
                 existingRecord.AuthToken = authToken.AuthToken;
                 existingRecord.DateCreated = authToken.DateCreated;
- 
-                //Save the existing record we found
-                Database.Save(existingRecord);
+				existingRecord.DateExpires = authToken.DateExpires; // S6 update expiration date at time of token change
+
+				//Save the existing record we found
+				Database.Save(existingRecord);
             }
         }
  
@@ -74,11 +76,18 @@ namespace UmbracoAuthTokens.Data
         /// <returns></returns>
         public static bool IsTokenValid(UmbracoAuthToken authToken)
         {
-            //Let's verify the token we have
-            //Is what we have in the DB matching on the UserID as lookup
- 
-            //Try & find record in DB on UserID
-            var lookupRecord = GetAuthToken(authToken.IdentityId);
+			// S6 Added from warren repo latest
+			//Let's verify that this token is not expired
+			if (authToken.DateExpires < DateTime.UtcNow)
+			{
+				return false;
+			}
+
+			//Let's verify the token we have
+			//Is what we have in the DB matching on the UserID as lookup
+
+			//Try & find record in DB on UserID
+			var lookupRecord = GetAuthToken(authToken.IdentityId);
  
             //If we find a record in DB
             if (lookupRecord != null)
