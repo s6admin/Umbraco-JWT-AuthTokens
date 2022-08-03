@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Web.Security;
@@ -6,7 +7,7 @@ using Umbraco.Core.Configuration;
 using Umbraco.Web.Mvc;
 using Umbraco.Web.WebApi;
 using UmbracoAuthTokens.Data;
- 
+
 namespace UmbracoAuthTokens.Controllers
 {
     [PluginController("TokenAuth")]
@@ -38,20 +39,25 @@ namespace UmbracoAuthTokens.Controllers
 					 */
 					//Check if we have an Auth Token for user
 					var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(user.Id);
-
+					
 					//If the token already exists
 					if (hasAuthToken != null)
 					{
-						//Lets just return it in the request
-						return hasAuthToken.AuthToken;
+						/* S6 Added: If a token exists during an AuthorizeUser request but it is EXPIRED, it needs to be updated! 
+						 * Let these cases fall through to the newToken logic below instead of getting immediately returned */
+						if(hasAuthToken.DateExpires >= DateTime.UtcNow)
+						{
+							// Unexpired token, return it in the request
+							return hasAuthToken.AuthToken;							
+						} 
 					}
 
-					//Else user has no token yet - so let's create one
+					//Else user has no token yet - so let's create one (S6: or existing has expired)
 					//Generate AuthToken DB object
-					var newToken = new UmbracoAuthToken();
+					UmbracoAuthToken newToken = new UmbracoAuthToken();										
 					newToken.IdentityId = user.Id;
 					newToken.IdentityType = IdentityAuthType.User.ToString();
-
+					
 					//Generate a new token for the user
 					var authToken = UmbracoAuthTokenFactory.GenerateAuthToken(newToken);
 

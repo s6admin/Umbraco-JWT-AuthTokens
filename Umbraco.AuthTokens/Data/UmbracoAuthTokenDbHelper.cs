@@ -76,7 +76,11 @@ namespace UmbracoAuthTokens.Data
         /// <returns></returns>
         public static bool IsTokenValid(UmbracoAuthToken authToken)
         {
-			// S6 Added from warren repo latest
+			/* S6 Added from warren repo latest,
+			 but if token is expired we need to update it/request a new one which
+			 the current pattern can't do. Calls to AuthorizeUser just always 
+			 return the stored token, even if it is expired. (see SecureApiController.AuthorizeUser mods) */
+
 			//Let's verify that this token is not expired
 			if (authToken.DateExpires < DateTime.UtcNow)
 			{

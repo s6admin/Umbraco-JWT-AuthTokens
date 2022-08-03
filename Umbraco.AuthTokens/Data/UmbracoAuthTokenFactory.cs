@@ -20,7 +20,7 @@ namespace UmbracoAuthTokens.Data
             var dateCreated = DateTime.UtcNow;
             var dateCreatedToString = dateCreated.ToString("u");
 			
-			// S6 Added from warren repo master
+			// S6 Added from warren repo master /S6
 			//this probably should be allowed to be configurable but keeping it simple and reasonable for now
 			var dateExpires = dateCreated.Add(TimeSpan.FromMinutes(60));
 			var dateExpiresTostring = dateExpires.ToString("u");
