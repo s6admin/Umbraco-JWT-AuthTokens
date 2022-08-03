@@ -35,41 +35,47 @@ namespace UmbracoAuthTokens.Attributes
         /// <param name="actionContext"></param>
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
-            try
-            {
-                //Auth the user from the request (HTTP headers)
-                var user = Authenticate(actionContext.Request);
- 
-                //User details not correct (as user obj null)
-                if (user == null)
-                {
-                    //Return a HTTP 401 Unauthorised header
-                    actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-                }
- 
-                //Set the user in route data so the WebAPI controller can use this user object & do what needed with it
-                actionContext.ControllerContext.Request.Properties.Add("umbraco-user", user);
- 
-                //If we have any optional sections to check for
-                if (_hasAccessToSections.Any())
-                {
-                    //Check that the user has access to the one or more provided sections (Contains ALL)
-                    var hasAccess = user != null && user.AllowedSections.ContainsAll(_hasAccessToSections);
- 
-                    //If user does NOT have access to ALL sections
-                    if (!hasAccess)
-                    {
-                        //Return a HTTP 401 Unauthorised header
-                        actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-                    }
-                }
- 
-            }
-            catch (Exception)
-            {
-                //Return a HTTP 401 Unauthorised header
-                actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-            }
+			// S6 TODO If some calls require CORS then a possible preflight OPTIONS call will be made and must be handled w/o authorization header
+			if (actionContext.Request.Method == HttpMethod.Options)
+			{
+				actionContext.Response = new HttpResponseMessage(HttpStatusCode.OK);
+			} else { 
+				try
+				{
+					//Auth the user from the request (HTTP headers)
+					var user = Authenticate(actionContext.Request);
+
+					//User details not correct (as user obj null)
+					if (user == null)
+					{
+						//Return a HTTP 401 Unauthorised header
+						actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+					}
+
+					//Set the user in route data so the WebAPI controller can use this user object & do what needed with it
+					actionContext.ControllerContext.Request.Properties.Add("umbraco-user", user);
+
+					//If we have any optional sections to check for
+					if (_hasAccessToSections.Any())
+					{
+						//Check that the user has access to the one or more provided sections (Contains ALL)
+						var hasAccess = user != null && user.AllowedSections.ContainsAll(_hasAccessToSections);
+
+						//If user does NOT have access to ALL sections
+						if (!hasAccess)
+						{
+							//Return a HTTP 401 Unauthorised header
+							actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+						}
+					}
+
+				}
+				catch (Exception)
+				{
+					//Return a HTTP 401 Unauthorised header
+					actionContext.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+				}
+			}			
  
             //Continue as normal
             base.OnActionExecuting(actionContext);

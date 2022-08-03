@@ -12,12 +12,13 @@ namespace UmbracoAuthTokens.Controllers
     [PluginController("TokenAuth")]
     public class SecureApiController : UmbracoApiController
     {
+		// S6 TODO - Custom route if possible so public facing APIs don't include the /umbraco/ slug? (additional IIS rewrite rules would be required to facilitate)
         /// <summary>
-        /// http://localhost:55778/umbraco/TokenAuth/SecureApi/AuthoriseUser
+        /// http://localhost:55778/umbraco/TokenAuth/SecureApi/AuthorizeUser
         /// </summary>
         /// <returns>A JWT token as a string if auth is valid</returns>
         [HttpPost]
-        public string AuthoriseUser(AuthCredentials auth)
+        public string AuthorizeUser(AuthCredentials auth)
         {
             //Verify user is valid credentials
             var isValidAuth = Security.ValidateBackOfficeCredentials(auth.Username, auth.Password);
@@ -30,16 +31,20 @@ namespace UmbracoAuthTokens.Controllers
 
 				if (user != null)
 				{
-					// S6 Removing this, otherwise existing token won't get updated (warren master branch doesn't perform hasAuthToken at all)
+					// S6 originally removed below, otherwise existing token won't get updated (warren master branch doesn't perform hasAuthToken at all)
+					/* but this means parallel requests for the same user from different locations (ie. app permissions logins) can lock each other
+					 * out b/c the token is refreshed each authorization request.
+					 * How to handle token expiration/re-authentication?
+					 */
 					//Check if we have an Auth Token for user
-					//var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(user.Id);
+					var hasAuthToken = UserAuthTokenDbHelper.GetAuthToken(user.Id);
 
-					////If the token already exists
-					//if (hasAuthToken != null)
-					//{
-					//    //Lets just return it in the request
-					//    return hasAuthToken.AuthToken;
-					//}
+					//If the token already exists
+					if (hasAuthToken != null)
+					{
+						//Lets just return it in the request
+						return hasAuthToken.AuthToken;
+					}
 
 					//Else user has no token yet - so let's create one
 					//Generate AuthToken DB object
@@ -68,11 +73,11 @@ namespace UmbracoAuthTokens.Controllers
         }
  
         /// <summary>
-        /// http://localhost:55778/umbraco/TokenAuth/SecureApi/AuthoriseMember
+        /// http://localhost:55778/umbraco/TokenAuth/SecureApi/AuthorizeMember
         /// </summary>
         /// <returns>A JWT token as a string if auth is valid</returns>
         [HttpPost]
-        public string AuthoriseMember(AuthCredentials auth)
+        public string AuthorizeMember(AuthCredentials auth)
         {
              
             //Verify user is valid credentials - using current membership provider
